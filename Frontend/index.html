@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Delivery App</title>
+</head>
+<body>
+    <h1>Food Delivery App</h1>
+    <div id="restaurants"></div>
+    <h2>Order</h2>
+    <button onclick="placeOrder()">Place Order</button>
+    <script>
+        let cart = [];
+        
+        function fetchRestaurants() {
+            fetch('http://localhost:3000/restaurants')
+                .then(response => response.json())
+                .then(data => {
+                    const restaurantsDiv = document.getElementById('restaurants');
+                    data.forEach(restaurant => {
+                        const restaurantDiv = document.createElement('div');
+                        restaurantDiv.innerHTML = `<h3>${restaurant.name}</h3>`;
+                        restaurant.items.forEach(item => {
+                            const itemDiv = document.createElement('div');
+                            itemDiv.innerHTML = `
+                                <span>${item.name} - $${item.price}</span>
+                                <button onclick="addToCart(${restaurant.id}, ${item.id}, '${item.name}', ${item.price})">Add to Cart</button>`;
+                            restaurantDiv.appendChild(itemDiv);
+                        });
+                        restaurantsDiv.appendChild(restaurantDiv);
+                    });
+                });
+        }
+        
+        function addToCart(restaurantId, itemId, itemName, itemPrice) {
+            cart.push({ restaurantId, itemId, itemName, itemPrice });
+            alert(`${itemName} added to cart!`);
+        }
+        
+        function placeOrder() {
+            if (cart.length === 0) {
+                alert('Cart is empty!');
+                return;
+            }
+            
+            const restaurantId = cart[0].restaurantId;
+            const items = cart.map(item => ({ id: item.itemId, name: item.itemName, price: item.itemPrice }));
+            
+            fetch('http://localhost:3000/order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ restaurantId, items })
+            })
+            .then(response => response.json())
+            .then(order => {
+                alert(`Order placed successfully! Order ID: ${order.id}`);
+                cart = [];
+            });
+        }
+        
+        fetchRestaurants();
+    </script>
+</body>
+</html>
